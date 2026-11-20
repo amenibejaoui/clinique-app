@@ -36,7 +36,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
-	@Value("${clm.cors.origins:http://localhost:4200}")
+	@Value("${clm.cors.origins:https://clinique-app-se4j.onrender.com}")
 	private String corsOrigins;
 
 	@Autowired

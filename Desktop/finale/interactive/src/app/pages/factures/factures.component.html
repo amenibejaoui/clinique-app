@@ -1,0 +1,185 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+        <h4 class="mb-sm-0">Factures</h4>
+        <div class="page-title-right">
+          <ol class="breadcrumb m-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">CLM</a></li>
+            <li class="breadcrumb-item active">Factures</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="card">
+        <div class="card-header d-flex align-items-center">
+          <h5 class="card-title mb-0 flex-grow-1">Liste des Factures</h5>
+          <div class="flex-shrink-0 d-flex gap-2">
+            <input type="text" class="form-control form-control-sm" placeholder="Rechercher..." [(ngModel)]="searchTerm"
+              style="width: 200px;">
+            <button class="btn btn-sm btn-success" (click)="openCreate()">
+              <i class="ri-add-line align-bottom me-1"></i> Ajouter
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div *ngIf="errorMsg" class="alert alert-danger" role="alert">{{ errorMsg }}</div>
+          <div *ngIf="loading" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Chargement...</span>
+            </div>
+          </div>
+
+          <div *ngIf="!loading && filteredFactures.length === 0" class="text-center py-4">
+            <i class="ri-file-list-3-line" style="font-size: 48px; color: #878a99;"></i>
+            <p class="text-muted mt-2">Aucune facture trouvée</p>
+          </div>
+
+          <div class="table-responsive" *ngIf="!loading && filteredFactures.length > 0">
+            <table class="table table-bordered table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>#</th>
+                  <th>Numéro</th>
+                  <th>Date Émission</th>
+                  <th>Échéance</th>
+                  <th>Montant TTC (€)</th>
+                  <th>Reste à payer (€)</th>
+                  <th>Statut</th>
+                  <th>Patient</th>
+                  <th>Médecin</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let f of filteredFactures">
+                  <td>{{ f.id }}</td>
+                  <td><span class="fw-semibold">{{ f.numero }}</span></td>
+                  <td>{{ f.dateEmission | date:'dd/MM/yyyy' }}</td>
+                  <td>{{ f.dateEcheance | date:'dd/MM/yyyy' }}</td>
+                  <td><span class="text-success fw-semibold">{{ f.montantTTC | number:'1.2-2' }} €</span></td>
+                  <td>{{ f.resteAPayer | number:'1.2-2' }} €</td>
+                  <td><span class="badge" [ngClass]="badgeClass(f.statut)">{{ f.statut }}</span></td>
+                  <td>{{ f.patient?.prenom }} {{ f.patient?.nom }}</td>
+                  <td>{{ f.rendezVous?.medecin?.prenom }} {{ f.rendezVous?.medecin?.nom }}</td>
+                  <td>
+                    <div class="d-flex gap-2">
+                      <button class="btn btn-sm btn-soft-info" title="Voir" (click)="openView(f)">
+                        <i class="ri-eye-fill align-bottom"></i>
+                      </button>
+                      <button class="btn btn-sm btn-soft-warning" title="Modifier" (click)="openEdit(f)">
+                        <i class="ri-pencil-fill align-bottom"></i>
+                      </button>
+                      <button class="btn btn-sm btn-soft-danger" title="Supprimer" (click)="deleteFacture(f.id!)">
+                        <i class="ri-delete-bin-fill align-bottom"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Ajout / Édition / Consultation -->
+<div *ngIf="showModal">
+  <div class="modal-backdrop fade show"></div>
+  <div class="modal fade show d-block" tabindex="-1" role="dialog" (click)="closeModal()">
+    <div class="modal-dialog modal-lg modal-dialog-centered" (click)="$event.stopPropagation()">
+      <div class="modal-content">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title">{{ modalTitle }}</h5>
+          <button type="button" class="btn-close" (click)="closeModal()"></button>
+        </div>
+
+        <div class="modal-body">
+          <div *ngIf="errorMsg" class="alert alert-danger py-2">{{ errorMsg }}</div>
+
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Numéro</label>
+              <input type="text" class="form-control" [ngModel]="form.numero || 'Généré par le serveur'" disabled>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Date d'émission</label>
+              <input type="date" class="form-control" [(ngModel)]="form.dateEmission" [disabled]="mode === 'view'">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Date d'échéance</label>
+              <input type="date" class="form-control" [(ngModel)]="form.dateEcheance" [disabled]="mode === 'view'">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Montant HT (€)</label>
+              <input type="number" step="0.01" class="form-control" [ngModel]="form.montantHT" disabled>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Taux TVA (fraction, ex. 0,19)</label>
+              <input type="number" step="0.01" min="0" class="form-control" [(ngModel)]="form.tauxTVA"
+                [disabled]="mode === 'view'">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Montant TVA (€)</label>
+              <input type="number" class="form-control" [ngModel]="form.montantTVA" disabled>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Montant TTC (€)</label>
+              <input type="number" class="form-control" [ngModel]="form.montantTTC" disabled>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Montant payé (€)</label>
+              <input type="number" step="0.01" class="form-control" [ngModel]="form.montantPaye" disabled>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Reste à payer (€)</label>
+              <input type="number" class="form-control" [ngModel]="form.resteAPayer" disabled>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Statut</label>
+              <select class="form-select" [ngModel]="form.statut" disabled>
+                <option *ngFor="let s of statuts" [value]="s">{{ s }}</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Patient ID *</label>
+              <select class="form-select" [(ngModel)]="patientId" (ngModelChange)="onPatientChange()"
+                [disabled]="mode !== 'create'">
+                <option [ngValue]="null">-- Choisir un patient --</option>
+                <option *ngFor="let patient of patients" [ngValue]="patient.id">{{ patient.prenom }} {{ patient.nom }}</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Rendez-vous *</label>
+              <select class="form-select" [(ngModel)]="rendezVousId" [disabled]="mode !== 'create'">
+                <option [ngValue]="null">-- Choisir --</option>
+                <option *ngFor="let r of rdvDuPatient" [ngValue]="r.id">
+                  #{{ r.id }} - {{ r.date | date:'dd/MM/yyyy' }} {{ r.heureDebut }} - {{ r.motif }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" (click)="closeModal()">
+            {{ mode === 'view' ? 'Fermer' : 'Annuler' }}
+          </button>
+          <button *ngIf="mode !== 'view'" type="button" class="btn btn-success" (click)="save()" [disabled]="saving">
+            <span *ngIf="saving" class="spinner-border spinner-border-sm me-1"></span>
+            {{ mode === 'create' ? 'Ajouter' : 'Enregistrer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

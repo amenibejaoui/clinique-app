@@ -1,0 +1,86 @@
+<div class="container-fluid">
+  <div class="page-title-box d-flex justify-content-between align-items-center">
+    <h4>Comptes utilisateurs</h4>
+    <button class="btn btn-success" (click)="create()">Créer un compte</button>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+  <div class="card">
+    <div class="card-body">
+      <div *ngIf="loading" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>
+      <div class="table-responsive" *ngIf="!loading">
+        <table class="table table-hover align-middle">
+          <thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Fiche liée</th><th>État</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let user of users">
+              <td>{{ user.prenom }} {{ user.nom }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.roles?.[0]?.libelle || '-' }}</td>
+              <td>
+                <span *ngIf="user.patient">Patient #{{ user.patient.id }}</span>
+                <span *ngIf="user.medecin">Médecin #{{ user.medecin.id }}</span>
+                <span *ngIf="!user.patient && !user.medecin">-</span>
+              </td>
+              <td>{{ user.actif ? 'Actif' : 'Inactif' }}</td>
+              <td>
+                <button class="btn btn-sm btn-soft-warning me-1" (click)="edit(user)">Modifier</button>
+                <button class="btn btn-sm btn-soft-danger" (click)="delete(user)">Supprimer</button>
+              </td>
+            </tr>
+            <tr *ngIf="users.length === 0"><td colspan="6" class="text-center text-muted">Aucun compte.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="showForm">
+  <div class="modal-backdrop fade show"></div>
+  <div class="modal fade show d-block" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">{{ selectedId ? 'Modifier le compte' : 'Créer un compte' }}</h5>
+        <button type="button" class="btn-close" (click)="showForm = false"></button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+        <div class="row g-3">
+          <div class="col-md-6"><label class="form-label">Nom</label><input class="form-control" [(ngModel)]="form.nom"></div>
+          <div class="col-md-6"><label class="form-label">Prénom</label><input class="form-control" [(ngModel)]="form.prenom"></div>
+          <div class="col-md-6"><label class="form-label">Email</label><input type="email" class="form-control" [(ngModel)]="form.email"></div>
+          <div class="col-md-6"><label class="form-label">Téléphone</label><input class="form-control" [(ngModel)]="form.tel"></div>
+          <div class="col-md-6"><label class="form-label">Mot de passe {{ selectedId ? '(laisser vide pour conserver)' : '*' }}</label>
+            <input type="password" class="form-control" [(ngModel)]="form.password" [required]="!selectedId">
+          </div>
+          <div class="col-md-6"><label class="form-label">Rôle</label>
+            <select class="form-select" [(ngModel)]="role" (ngModelChange)="onRoleChange()">
+              <option *ngFor="let item of roles" [value]="item.libelle">{{ item.libelle }}</option>
+            </select>
+          </div>
+          <div class="col-md-6" *ngIf="role === 'PATIENT'"><label class="form-label">Fiche patient</label>
+            <select class="form-select" [(ngModel)]="patientId">
+              <option [ngValue]="null">-- Choisir --</option>
+              <option *ngFor="let patient of patients" [ngValue]="patient.id">{{ patient.prenom }} {{ patient.nom }} ({{ patient.email || patient.cin || patient.id }})</option>
+            </select>
+          </div>
+          <div class="col-md-6" *ngIf="role === 'MEDECIN'"><label class="form-label">Fiche médecin</label>
+            <select class="form-select" [(ngModel)]="medecinId">
+              <option [ngValue]="null">-- Choisir --</option>
+              <option *ngFor="let medecin of medecins" [ngValue]="medecin.id">Dr {{ medecin.prenom }} {{ medecin.nom }} ({{ medecin.email || medecin.id }})</option>
+            </select>
+          </div>
+          <div class="col-md-6 form-check form-switch ms-2">
+            <input class="form-check-input" type="checkbox" [(ngModel)]="form.actif" id="userActive">
+            <label class="form-check-label" for="userActive">Compte actif</label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-light" (click)="showForm = false">Annuler</button>
+        <button class="btn btn-success" (click)="save()" [disabled]="saving">
+          <span *ngIf="saving" class="spinner-border spinner-border-sm me-1"></span>Enregistrer
+        </button>
+      </div>
+    </div></div>
+  </div>
+</div>

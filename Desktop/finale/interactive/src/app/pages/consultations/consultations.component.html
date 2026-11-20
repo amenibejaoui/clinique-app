@@ -1,0 +1,165 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+        <h4 class="mb-sm-0">Consultations</h4>
+        <div class="page-title-right">
+          <ol class="breadcrumb m-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">CLM</a></li>
+            <li class="breadcrumb-item active">Consultations</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="card">
+        <div class="card-header d-flex align-items-center">
+          <h5 class="card-title mb-0 flex-grow-1">Liste des Consultations</h5>
+          <div class="flex-shrink-0 d-flex align-items-center gap-2">
+            <input type="text" class="form-control form-control-sm" placeholder="Rechercher..." [(ngModel)]="searchTerm"
+              style="width: 200px;">
+            <button type="button" class="btn btn-sm btn-success text-nowrap" (click)="openAddModal(consultationModal)">
+              <i class="ri-add-line align-bottom me-1"></i> Ajouter une consultation
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div *ngIf="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+          <div *ngIf="loading" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Chargement...</span>
+            </div>
+          </div>
+
+          <div *ngIf="!loading && filteredConsultations.length === 0" class="text-center py-4">
+            <i class="ri-calendar-check-line" style="font-size: 48px; color: #878a99;"></i>
+            <p class="text-muted mt-2">Aucune consultation trouvée</p>
+          </div>
+
+          <div class="table-responsive" *ngIf="!loading && filteredConsultations.length > 0">
+            <table class="table table-bordered table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Date</th>
+                  <th scope="col">RDV #</th>
+                  <th scope="col">Patient / Médecin</th>
+                  <th scope="col">Diagnostic</th>
+                  <th scope="col">Poids</th>
+                  <th scope="col">Taille</th>
+                  <th scope="col">Température</th>
+                  <th scope="col">Tension</th>
+                  <th scope="col">Traitement prescrit</th>
+                  <th scope="col">Observations</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let c of filteredConsultations">
+                  <td>{{ c.id }}</td>
+                  <td>{{ c.dateConsultation | date:'dd/MM/yyyy HH:mm' }}</td>
+                  <td>{{ c.idRendezVous || c.rendezVous?.id || '-' }}</td>
+                  <td>
+                    <span *ngIf="c.rendezVous?.patient">{{ c.rendezVous.patient.prenom }} {{ c.rendezVous.patient.nom
+                      }}</span>
+                    <span *ngIf="c.rendezVous?.medecin"> / Dr {{ c.rendezVous.medecin.nom }}</span>
+                    <span *ngIf="!c.rendezVous?.patient && !c.rendezVous?.medecin">-</span>
+                  </td>
+                  <td>{{ c.diagnostic }}</td>
+                  <td>{{ c.poids ?? '-' }}</td>
+                  <td>{{ c.taille ?? '-' }}</td>
+                  <td>{{ c.temperature ?? '-' }}</td>
+                  <td>{{ c.tension || '-' }}</td>
+                  <td>{{ c.traitementPrescrit || '-' }}</td>
+                  <td>{{ c.observations || '-' }}</td>
+                  <td>
+                    <div class="d-flex gap-2">
+                      <button type="button" class="btn btn-sm btn-soft-warning" title="Modifier"
+                        (click)="openEditModal(consultationModal, c)">
+                        <i class="ri-pencil-fill align-bottom"></i>
+                      </button>
+                      <button type="button" class="btn btn-sm btn-soft-danger" title="Supprimer"
+                        (click)="deleteConsultation(c.id!)">
+                        <i class="ri-delete-bin-fill align-bottom"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modale d'ajout / modification d'une consultation -->
+<ng-template #consultationModal let-modal>
+  <div class="modal-header bg-light p-3">
+    <h5 class="modal-title">{{ isEditMode ? 'Modifier une Consultation' : 'Ajouter une Consultation' }}</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <form [formGroup]="consultationForm" (ngSubmit)="saveConsultation(modal)">
+    <div class="modal-body">
+      <div *ngIf="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Date de consultation *</label>
+          <input type="datetime-local" class="form-control" formControlName="dateConsultation">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Rendez-vous *</label>
+          <select class="form-select" formControlName="idRendezVous" [disabled]="isEditMode">
+            <option [ngValue]="null">-- Choisir un rendez-vous --</option>
+            <option *ngFor="let appointment of rendezVousList" [ngValue]="appointment.id"
+              [disabled]="!isRendezVousSelectable(appointment)">
+              #{{ appointment.id }} - {{ appointment.date | date:'dd/MM/yyyy' }} -
+              {{ appointment.patient?.prenom }} {{ appointment.patient?.nom }} / Dr
+              {{ appointment.medecin?.prenom }} {{ appointment.medecin?.nom }} ({{ appointment.statut }})
+            </option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Poids (kg)</label>
+          <input type="number" step="0.1" class="form-control" formControlName="poids" placeholder="Ex: 70">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Taille (cm)</label>
+          <input type="number" step="0.1" class="form-control" formControlName="taille" placeholder="Ex: 175">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Température (°C)</label>
+          <input type="number" step="0.1" class="form-control" formControlName="temperature" placeholder="Ex: 37.2">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Tension</label>
+          <input type="text" class="form-control" formControlName="tension" placeholder="Ex: 12/8">
+        </div>
+        <div class="col-12">
+          <label class="form-label">Diagnostic *</label>
+          <input type="text" class="form-control" formControlName="diagnostic" placeholder="Ex: Angine">
+        </div>
+        <div class="col-12">
+          <label class="form-label">Traitement prescrit</label>
+          <textarea rows="2" class="form-control" formControlName="traitementPrescrit"
+            placeholder="Médicaments, posologie..."></textarea>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Observations</label>
+          <textarea rows="2" class="form-control" formControlName="observations"
+            placeholder="Remarques complémentaires..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-light" (click)="modal.dismiss()">Annuler</button>
+      <button type="submit" class="btn btn-success" [disabled]="consultationForm.invalid">
+        {{ isEditMode ? 'Mettre à jour' : 'Enregistrer' }}
+      </button>
+    </div>
+  </form>
+</ng-template>

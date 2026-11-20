@@ -1,0 +1,182 @@
+<div class="container-fluid">
+  <!-- Page Title -->
+  <div class="row">
+    <div class="col-12">
+      <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+        <h4 class="mb-sm-0">Patients</h4>
+        <div class="page-title-right">
+          <ol class="breadcrumb m-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">CLM</a></li>
+            <li class="breadcrumb-item active">Patients</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="card">
+        <div class="card-header d-flex align-items-center">
+          <h5 class="card-title mb-0 flex-grow-1">Liste des Patients</h5>
+          <div class="flex-shrink-0 d-flex align-items-center gap-2">
+            <input type="text" class="form-control form-control-sm" placeholder="Rechercher..." [(ngModel)]="searchTerm"
+              style="width: 200px;">
+            <button type="button" class="btn btn-sm btn-success text-nowrap" (click)="openAddModal(patientModal)">
+              <i class="ri-add-line align-bottom me-1"></i> Ajouter un patient
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div *ngIf="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+          <div *ngIf="loading" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Chargement...</span>
+            </div>
+          </div>
+
+          <div *ngIf="!loading && filteredPatients.length === 0" class="text-center py-4">
+            <i class="ri-user-line" style="font-size: 48px; color: #878a99;"></i>
+            <p class="text-muted mt-2">Aucun patient trouvé</p>
+          </div>
+
+          <div class="table-responsive" *ngIf="!loading && filteredPatients.length > 0">
+            <table class="table table-bordered table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Nom & Prénom</th>
+                  <th scope="col">CIN</th>
+                  <th scope="col">Date naissance</th>
+                  <th scope="col">Téléphone</th>
+                  <th scope="col">Email</th>
+                  <th scope="col">Sexe</th>
+                  <th scope="col">Groupe sanguin</th>
+                  <th scope="col">N° Assurance</th>
+                  <th scope="col">Adresse / Ville</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let patient of filteredPatients">
+                  <td>{{ patient.id }}</td>
+                  <td>{{ patient.nom }} {{ patient.prenom }}</td>
+                  <td>{{ patient.cin }}</td>
+                  <td>{{ patient.dateNaissance }}</td>
+                  <td>{{ patient.tel }}</td>
+                  <td>{{ patient.email }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="{
+                      'bg-primary-subtle text-primary': patient.sexe === 'HOMME',
+                      'bg-danger-subtle text-danger': patient.sexe === 'FEMME'
+                    }">
+                      {{ patient.sexe === 'HOMME' ? 'Homme' : patient.sexe === 'FEMME' ? 'Femme' : '-' }}
+                    </span>
+                  </td>
+                  <td>{{ patient.groupeSanguin || '-' }}</td>
+                  <td>{{ patient.numeroAssurance || '-' }}</td>
+                  <td>{{ patient.adresse }}{{ patient.ville ? ' - ' + patient.ville : '' }}</td>
+                  <td>
+                    <div class="d-flex gap-2">
+                      <button type="button" class="btn btn-sm btn-soft-warning" title="Modifier"
+                        (click)="openEditModal(patientModal, patient)">
+                        <i class="ri-pencil-fill align-bottom"></i>
+                      </button>
+                      <button type="button" class="btn btn-sm btn-soft-danger" title="Supprimer"
+                        (click)="deletePatient(patient.id!)">
+                        <i class="ri-delete-bin-fill align-bottom"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modale d'ajout / modification d'un patient -->
+<ng-template #patientModal let-modal>
+  <div class="modal-header bg-light p-3">
+    <h5 class="modal-title">{{ isEditMode ? 'Modifier un Patient' : 'Ajouter un Patient' }}</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <form [formGroup]="patientForm" (ngSubmit)="savePatient(modal)">
+    <div class="modal-body">
+      <div *ngIf="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Nom *</label>
+          <input type="text" class="form-control" formControlName="nom" placeholder="Ex: bejaoui">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Prénom *</label>
+          <input type="text" class="form-control" formControlName="prenom" placeholder="Ex: ameni">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">CIN</label>
+          <input type="text" class="form-control" formControlName="cin" placeholder="Ex: 14141414">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Date de naissance</label>
+          <input type="date" class="form-control" formControlName="dateNaissance">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Date d'inscription</label>
+          <input type="date" class="form-control" formControlName="dateInscription">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Téléphone</label>
+          <input type="text" class="form-control" formControlName="tel" placeholder="Ex: 12365478">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-control" formControlName="email" placeholder="patient@gmail.com">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Sexe</label>
+          <select class="form-select" formControlName="sexe">
+            <option value="">-- Sélectionner --</option>
+            <option value="HOMME">Homme</option>
+            <option value="FEMME">Femme</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Groupe sanguin</label>
+          <select class="form-select" formControlName="groupeSanguin">
+            <option value="">-- Sélectionner --</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Numéro d'assurance</label>
+          <input type="text" class="form-control" formControlName="numeroAssurance" placeholder="Ex: ASS-12345">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Adresse</label>
+          <input type="text" class="form-control" formControlName="adresse" placeholder="Ex: tunis">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Ville</label>
+          <input type="text" class="form-control" formControlName="ville" placeholder="Ex: Tunis">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-light" (click)="modal.dismiss()">Annuler</button>
+      <button type="submit" class="btn btn-success" [disabled]="patientForm.invalid">
+        {{ isEditMode ? 'Mettre à jour' : 'Enregistrer' }}
+      </button>
+    </div>
+  </form>
+</ng-template>

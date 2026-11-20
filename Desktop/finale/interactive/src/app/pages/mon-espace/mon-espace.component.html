@@ -1,0 +1,70 @@
+<div class="container-fluid">
+  <div class="page-title-box">
+    <h4>Mon espace médical</h4>
+    <p *ngIf="profile" class="text-muted mb-0">Bonjour {{ profile.prenom }} {{ profile.nom }}</p>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+  <div *ngIf="loading" class="text-center py-4">
+    <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement…</span></div>
+  </div>
+
+  <ng-container *ngIf="!loading && !errorMessage">
+    <div class="card">
+      <div class="card-header"><h5 class="card-title mb-0">Mes rendez-vous</h5></div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead><tr><th>Date</th><th>Heure</th><th>Motif</th><th>Statut</th><th>{{ isPatient ? 'Médecin' : 'Patient' }}</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let appointment of appointments">
+              <td>{{ appointment.date | date:'dd/MM/yyyy' }}</td>
+              <td>{{ appointment.heureDebut }}</td>
+              <td>{{ appointment.motif || '-' }}</td>
+              <td>{{ appointment.statut }}</td>
+              <td *ngIf="isPatient">Dr {{ appointment.medecin?.prenom }} {{ appointment.medecin?.nom }}</td>
+              <td *ngIf="!isPatient">{{ appointment.patient?.prenom }} {{ appointment.patient?.nom }}</td>
+            </tr>
+            <tr *ngIf="appointments.length === 0"><td colspan="5" class="text-center text-muted">Aucun rendez-vous.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header"><h5 class="card-title mb-0">Mes consultations</h5></div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead><tr><th>Date</th><th>Diagnostic</th><th>Traitement prescrit</th><th>Observations</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let consultation of consultations">
+              <td>{{ consultation.dateConsultation | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td>{{ consultation.diagnostic || '-' }}</td>
+              <td>{{ consultation.traitementPrescrit || '-' }}</td>
+              <td>{{ consultation.observations || '-' }}</td>
+            </tr>
+            <tr *ngIf="consultations.length === 0"><td colspan="4" class="text-center text-muted">Aucune consultation.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div *ngIf="isPatient" class="card mt-3">
+      <div class="card-header"><h5 class="card-title mb-0">Mes factures</h5></div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead><tr><th>Numéro</th><th>Émise le</th><th>Montant TTC</th><th>Reste à payer</th><th>Statut</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let invoice of invoices">
+              <td>{{ invoice.numero }}</td>
+              <td>{{ invoice.dateEmission | date:'dd/MM/yyyy' }}</td>
+              <td>{{ invoice.montantTTC | number:'1.2-2' }}</td>
+              <td>{{ invoice.resteAPayer | number:'1.2-2' }}</td>
+              <td>{{ invoice.statut }}</td>
+            </tr>
+            <tr *ngIf="invoices.length === 0"><td colspan="5" class="text-center text-muted">Aucune facture.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+</div>

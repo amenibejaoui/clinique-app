@@ -1,0 +1,34 @@
+# Build
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# Dépendances
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# Cache Angular
+/.angular/cache
+.sass-cache/
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.iml
+
+# Système
+.DS_Store
+Thumbs.db
+
+# Divers
+/connect.lock
+/coverage
+/libpeerconnect
+testem.log
+/typings
+
+# Secrets
+.env

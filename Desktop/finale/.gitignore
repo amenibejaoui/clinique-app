@@ -1,0 +1,33 @@
+# Dépendances et builds
+node_modules/
+target/
+dist/
+.angular/
+build/
+out/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+.classpath
+.project
+.settings/
+.factorypath
+.sts4/
+.vs/
+
+# Système
+.DS_Store
+Thumbs.db
+
+# Logs et fichiers temporaires
+*.log
+*.tmp
+
+# Secrets et configuration locale
+.env
+.env.*
+application-local.properties
+application-local.yml

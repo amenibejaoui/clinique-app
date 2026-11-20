@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://localhost:9090/api',
+  apiUrl: 'https://clinique-back-4vco.onrender.com/api',
   defaultauth: 'fackbackend',
   firebaseConfig: {
     apiKey: '',
